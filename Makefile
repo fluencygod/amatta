@@ -3,8 +3,7 @@ backend-setup backend-dev backend-test backend-lint backend-build \
 web-setup web-dev web-test web-lint web-build \
 crawler-setup crawler-run \
 compose-backend-up compose-backend-down compose-web-up compose-web-down compose-airflow-init compose-airflow-up compose-airflow-down \
-compose-db-up compose-db-down \
-snapshot rollback
+compose-db-up compose-db-down
 
 help:
 	@echo "Make targets:"
@@ -15,7 +14,7 @@ help:
 	@echo "  build                Build backend and web"
 	@echo "  compose-*-up/down    Split compose: backend/web/airflow"
 	@echo "  crawler-setup/run    Crawler deps / run CLI"
-	@echo "  snapshot/rollback    Git snapshot utilities"
+    @echo "  (snapshot/rollback removed)"
 
 setup: backend-setup web-setup crawler-setup ## Install all dependencies
 
@@ -116,8 +115,3 @@ kafka-topic-create:
 compose-net-init:
 	docker network create news_net 2>/dev/null || true
 
-snapshot: ## Create a git snapshot tag (TAG optional)
-	./scripts/git-snapshot.sh "$(TAG)"
-
-rollback: ## Roll back to a tag: make rollback TAG=v0.1.0
-	./scripts/git-rollback.sh "$(TAG)"
