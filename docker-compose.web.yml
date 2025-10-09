@@ -1,0 +1,12 @@
+services:
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE=${VITE_API_BASE}
+    container_name: news_web
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+

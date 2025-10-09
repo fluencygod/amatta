@@ -1,0 +1,91 @@
+x-airflow-environment: &airflow_environment
+  AIRFLOW__CORE__EXECUTOR: LocalExecutor
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+  AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+  AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+  # Make sure all components share the same secret key for log serving
+  AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
+  PYTHONPATH: /opt/airflow/crawler/src
+  # Crawler runtime ENV (connects to your main DB)
+  CRAWLER_DATABASE_URL: ${CRAWLER_DATABASE_URL}
+  CRAWLER_USER_AGENT: ${CRAWLER_USER_AGENT:-news-crawler/1.0 (+https://example.com)}
+  CRAWLER_DAILY_LIMIT: ${CRAWLER_DAILY_LIMIT:-100}
+  # Install extra libs into the Airflow image at startup
+  _PIP_ADDITIONAL_REQUIREMENTS: "feedparser==6.0.11 requests==2.32.3 beautifulsoup4==4.12.3 lxml==5.3.0 PyMySQL==1.1.1"
+
+services:
+  airflow-db:
+    image: postgres:15
+    container_name: news_airflow_db
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - airflow_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  airflow-webserver:
+    image: apache/airflow:2.9.2-python3.11
+    container_name: news_airflow_web
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+    environment:
+      <<: *airflow_environment
+      AIRFLOW__WEBSERVER__INSTANCE_NAME: News Airflow
+    command: webserver
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./apps/crawler/dags:/opt/airflow/dags
+      - ./apps/crawler/src:/opt/airflow/crawler/src
+      - airflow_logs:/opt/airflow/logs
+    restart: unless-stopped
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.2-python3.11
+    container_name: news_airflow_scheduler
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+    environment:
+      <<: *airflow_environment
+    command: scheduler
+    volumes:
+      - ./apps/crawler/dags:/opt/airflow/dags
+      - ./apps/crawler/src:/opt/airflow/crawler/src
+      - airflow_logs:/opt/airflow/logs
+    restart: unless-stopped
+
+  airflow-init:
+    image: apache/airflow:2.9.2-python3.11
+    container_name: news_airflow_init
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+    environment:
+      <<: *airflow_environment
+      AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS: 'false'
+      AIRFLOW_USERNAME: ${AIRFLOW_USERNAME:-admin}
+      AIRFLOW_PASSWORD: ${AIRFLOW_PASSWORD:-admin}
+      AIRFLOW_EMAIL: ${AIRFLOW_EMAIL:-admin@example.com}
+    entrypoint: /bin/bash
+    command: -c "airflow db init && airflow users create --username $$AIRFLOW_USERNAME --password $$AIRFLOW_PASSWORD --firstname Admin --lastname User --role Admin --email $$AIRFLOW_EMAIL || true"
+    volumes:
+      - ./apps/crawler/dags:/opt/airflow/dags
+      - ./apps/crawler/src:/opt/airflow/crawler/src
+      - airflow_logs:/opt/airflow/logs
+
+volumes:
+  airflow_db_data:
+  airflow_logs:
+
+networks:
+  default:
+    name: news_net
+    external: true
