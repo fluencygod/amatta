@@ -47,3 +47,10 @@
 - Follow this AGENTS.md for all files in this repo.
 - Make minimal, surgical changes; update docs/tests with code changes.
 - Before handing off, run `make lint` and `make test` or the closest equivalents.
+
+### Commit & Push Workflow (Agent)
+- Commit every substantive change as it’s made, using Conventional Commits (feat/fix/chore/docs/refactor/etc.).
+- Do not push automatically. Only push when the user explicitly asks (to `origin/main` for this news repo).
+- After each commit (when not pushing), report how many commits are ahead of the upstream tracking branch.
+  - Definition: ahead count = `git rev-list --count @{u}..HEAD` (or `0` if no upstream).
+- Keep commits focused and small; group related edits; include brief, clear messages.
