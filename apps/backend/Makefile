@@ -1,4 +1,4 @@
-.PHONY: setup dev test lint build
+.PHONY: setup dev dev-https test lint build
 
 PYTHON ?= python3
 PIP ?= pip3
@@ -8,6 +8,12 @@ setup: ## Install backend dependencies
 
 dev: ## Run FastAPI app with reload
 	PYTHONPATH=./src uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+dev-https: ## Run FastAPI app with HTTPS (mkcert)
+	# Override CERT_FILE/KEY_FILE if needed
+	CERT_FILE?=./certs/localhost+2.pem
+	KEY_FILE?=./certs/localhost+2-key.pem
+	PYTHONPATH=./src uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --ssl-certfile $(CERT_FILE) --ssl-keyfile $(KEY_FILE)
 
 test: ## Run backend tests
 	PYTHONPATH=./src pytest -q

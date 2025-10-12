@@ -1,5 +1,5 @@
 .PHONY: help setup dev test lint build \
-backend-setup backend-dev backend-test backend-lint backend-build \
+backend-setup backend-dev backend-dev-https backend-test backend-lint backend-build \
 web-setup web-dev web-test web-lint web-build \
 crawler-setup crawler-run \
 compose-backend-up compose-backend-down compose-web-up compose-web-down compose-airflow-init compose-airflow-up compose-airflow-down \
@@ -9,6 +9,7 @@ help:
 	@echo "Make targets:"
 	@echo "  setup                Install all deps (backend, web, crawler)"
 	@echo "  dev                  Run backend locally (use 'web-dev' for FE)"
+	@echo "  backend-dev-https    Run backend locally with HTTPS (mkcert)"
 	@echo "  test                 Run backend tests"
 	@echo "  lint                 Lint/format backend and web"
 	@echo "  build                Build backend and web"
@@ -31,6 +32,9 @@ backend-setup:
 
 backend-dev:
 	$(MAKE) -C apps/backend dev
+
+backend-dev-https:
+	$(MAKE) -C apps/backend dev-https
 
 backend-test:
 	$(MAKE) -C apps/backend test
@@ -114,4 +118,3 @@ kafka-topic-create:
 .PHONY: compose-net-init
 compose-net-init:
 	docker network create news_net 2>/dev/null || true
-
