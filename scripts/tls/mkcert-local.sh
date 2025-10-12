@@ -35,15 +35,29 @@ mkcert -cert-file localhost.pem -key-file localhost-key.pem localhost 127.0.0.1 
 rc_gen=$?
 set -e
 
-if [ $rc_gen -ne 0 ]; then
-  echo "mkcert returned non-zero (possibly due to optional trust store hooks). Verifying files..." >&2
-fi
-
-if [ ! -f "$OUT_DIR/localhost.pem" ] || [ ! -f "$OUT_DIR/localhost-key.pem" ]; then
-  echo "Failed to create cert files. Please try manually:" >&2
-  echo "  mkcert -install" >&2
-  echo "  mkcert -cert-file $OUT_DIR/localhost.pem -key-file $OUT_DIR/localhost-key.pem localhost 127.0.0.1 ::1" >&2
-  exit 1
+if [ $rc_gen -ne 0 ] || [ ! -f "$OUT_DIR/localhost.pem" ] || [ ! -f "$OUT_DIR/localhost-key.pem" ]; then
+  echo "mkcert failed or did not emit certs, falling back to OpenSSL self-signed certs..." >&2
+  cat > san.cnf << 'EOF'
+[req]
+default_bits = 2048
+prompt = no
+default_md = sha256
+distinguished_name = dn
+x509_extensions = v3_req
+[dn]
+CN=localhost
+[v3_req]
+subjectAltName = @alt_names
+[alt_names]
+DNS.1 = localhost
+IP.1 = 127.0.0.1
+IP.2 = ::1
+EOF
+  openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout localhost-key.pem -out localhost.pem -config san.cnf
+  rm -f san.cnf || true
+  echo "Generated self-signed certs via OpenSSL. Note: Browsers may require extra steps to accept them." >&2
+  echo "Tip (Chrome): enable 'Allow invalid certificates for resources loaded from localhost' at chrome://flags/#allow-insecure-localhost" >&2
 fi
 
 echo "Done. Files:"
@@ -54,4 +68,3 @@ echo "Use with uvicorn:"
 echo "  uvicorn app.main:app --host 0.0.0.0 --port 8000 \\
     --ssl-certfile $OUT_DIR/localhost.pem \\
     --ssl-keyfile $OUT_DIR/localhost-key.pem"
-
