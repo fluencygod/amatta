@@ -1,9 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, Request
+from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .db import Base, engine
 from .routers import auth, articles, profile, bookmarks, reactions, events
+from .db import get_db
 
 
 def create_app() -> FastAPI:
@@ -55,6 +57,11 @@ def create_app() -> FastAPI:
                 await producer.stop()
             except Exception:
                 pass
+
+    # Alias endpoint: `/ingest` → reuse events ingestion
+    @app.post("/ingest")
+    async def ingest_alias(batch: events.EventBatchIn, request: Request, db: Session = Depends(get_db)):
+        return await events.ingest_events(batch, request, db)
 
     return app
 

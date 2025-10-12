@@ -6,6 +6,8 @@ from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
+from pydantic.config import ConfigDict
+from uuid import uuid4
 from sqlalchemy.orm import Session
 
 from ..config import settings
@@ -13,6 +15,7 @@ from ..db import get_db
 
 
 class EventIn(BaseModel):
+    # Core (existing)
     event: str
     ts: Optional[datetime] = None
     user_id: Optional[int] = None
@@ -24,6 +27,18 @@ class EventIn(BaseModel):
     position: Optional[int] = None
     viewport: Optional[dict] = None
     meta: Optional[dict] = None
+
+    # Extended (allow richer schema; optional for backward-compat)
+    event_id: Optional[str] = None
+    event_time: Optional[datetime] = None
+    event_name: Optional[str] = None
+    client_version: Optional[str] = None
+    device_type: Optional[str] = None
+    duration_sec: Optional[int] = None
+    current_url: Optional[str] = None
+
+    # Accept and pass-through any extra keys
+    model_config = ConfigDict(extra="allow")
 
 
 class EventBatchIn(BaseModel):
@@ -72,10 +87,19 @@ async def ingest_events(batch: EventBatchIn, request: Request, db: Session = Dep
     ua = request.headers.get("user-agent")
     sent = 0
     for e in batch.events:
-        data = e.dict()
+        data = e.dict()  # includes extras via model_config
+        # Normalize timestamps and naming
         data.setdefault("ts", datetime.utcnow())
         if isinstance(data.get("ts"), datetime):
             data["ts"] = data["ts"].isoformat()
+        # event_time/event_name aliases for analytics pipelines
+        data.setdefault("event_time", data.get("ts"))
+        data.setdefault("event_name", data.get("event"))
+        # URL alias
+        if "current_url" not in data and data.get("url"):
+            data["current_url"] = data["url"]
+        # Ensure event_id exists for deduplication
+        data.setdefault("event_id", uuid4().hex)
         data.setdefault("ua", ua)
         ip = _client_ip(request)
         if ip:
@@ -93,6 +117,11 @@ async def ingest_single(evt: EventIn, request: Request, db: Session = Depends(ge
     data.setdefault("ts", datetime.utcnow())
     if isinstance(data.get("ts"), datetime):
         data["ts"] = data["ts"].isoformat()
+    data.setdefault("event_time", data.get("ts"))
+    data.setdefault("event_name", data.get("event"))
+    if "current_url" not in data and data.get("url"):
+        data["current_url"] = data["url"]
+    data.setdefault("event_id", uuid4().hex)
     data.setdefault("ua", ua)
     ip = _client_ip(request)
     if ip:
