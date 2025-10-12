@@ -10,10 +10,10 @@ dev: ## Run FastAPI app with reload
 	PYTHONPATH=./src uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 dev-https: ## Run FastAPI app with HTTPS (mkcert/OpenSSL)
-    # Override CERT_FILE/KEY_FILE if needed
-    CERT_FILE?=./certs/localhost.pem
-    KEY_FILE?=./certs/localhost-key.pem
-    PYTHONPATH=./src uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --ssl-certfile $(CERT_FILE) --ssl-keyfile $(KEY_FILE)
+	# Override CERT_FILE/KEY_FILE if needed
+	CERT_FILE?=./certs/localhost.pem
+	KEY_FILE?=./certs/localhost-key.pem
+	PYTHONPATH=./src uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --ssl-certfile $(CERT_FILE) --ssl-keyfile $(KEY_FILE)
 
 test: ## Run backend tests
 	PYTHONPATH=./src pytest -q
