@@ -6,9 +6,9 @@ compose-backend-up compose-backend-down compose-web-up compose-web-down compose-
 compose-db-up compose-db-down \
 compose-backend-up-https compose-backend-down-https
 
-	help:
-		@echo "Make targets:"
-		@echo "  setup                Install all deps (backend, web, crawler)"
+help:
+	@echo "Make targets:"
+	@echo "  setup                Install all deps (backend, web, crawler)"
 	@echo "  dev                  Run backend locally (use 'web-dev' for FE)"
 	@echo "  backend-dev-https    Run backend locally with HTTPS (mkcert)"
 	@echo "  test                 Run backend tests"
@@ -16,8 +16,7 @@ compose-backend-up-https compose-backend-down-https
 	@echo "  build                Build backend and web"
 	@echo "  compose-*-up/down    Split compose: backend/web/airflow"
 	@echo "  crawler-setup/run    Crawler deps / run CLI"
-    @echo "  (snapshot/rollback removed)"
-    @echo "  backend HTTPS via compose: make compose-backend-up-https"
+	@echo "  backend HTTPS via compose: make compose-backend-up-https"
 
 setup: backend-setup web-setup crawler-setup ## Install all dependencies
 
