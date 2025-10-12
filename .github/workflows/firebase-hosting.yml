@@ -29,6 +29,9 @@ jobs:
       - name: Build (web)
         run: npm run build
         working-directory: apps/web
+        env:
+          VITE_API_BASE: ${{ vars.VITE_API_BASE }}
+          VITE_CLIENT_VERSION: ${{ vars.VITE_CLIENT_VERSION }}
 
       - name: Deploy to Firebase Hosting (live)
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -41,4 +44,3 @@ jobs:
         # - Set repository secret FIREBASE_SERVICE_ACCOUNT to a Service Account JSON
         #   with the "Firebase Hosting Admin" role for your project.
         # - Set repository variable FIREBASE_PROJECT_ID to your Firebase project id.
-
