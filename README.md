@@ -2,6 +2,9 @@
 
 This monorepo contains a FastAPI backend and a React (Vite) web app. Structure follows the repo guidelines: each app has `src/`, `tests/`, `scripts/`, etc.
 
+See also:
+- Docs – Analytics Tagging: `docs/tagging/README.md`
+
 ## Structure
 
 - `apps/backend/` – FastAPI app (MariaDB) with auth, Alembic, Dockerfile
