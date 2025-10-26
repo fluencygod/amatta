@@ -9,6 +9,7 @@ type EventBase = {
   device_type?: 'Mobile'|'Tablet'|'PC'|string
   duration_sec?: number
   current_url?: string
+  clickId?: string
 
   // existing fields (kept for backend compatibility)
   event: string
@@ -20,7 +21,6 @@ type EventBase = {
   referrer?: string
   article_id?: number
   position?: number
-  viewport?: { w: number; h: number }
   meta?: Record<string, any>
 }
 
@@ -48,14 +48,13 @@ export function getUserId(): number | null {
   try{ const v = localStorage.getItem('uid'); return v ? Number(v) : null }catch{ return null }
 }
 
-export function basePayload(): Pick<EventBase, 'session_id'|'user_id'|'page'|'url'|'referrer'|'viewport'> {
+export function basePayload(): Pick<EventBase, 'session_id'|'user_id'|'page'|'url'|'referrer'> {
   return {
     session_id: getSessionId(),
     user_id: getUserId(),
     page: typeof window !== 'undefined' ? location.pathname : undefined,
     url: typeof window !== 'undefined' ? location.href : undefined,
     referrer: typeof document !== 'undefined' ? document.referrer : undefined,
-    viewport: typeof window !== 'undefined' ? { w: window.innerWidth, h: window.innerHeight } : undefined,
   }
 }
 
@@ -103,36 +102,4 @@ export function track(event: string, props: Partial<EventBase> = {}, opts?: { be
 export function trackDwell(start: number, page?: string){
   const dur = Date.now() - start
   track('dwell', { meta: { duration_ms: dur }, duration_sec: Math.round(dur/1000), page }, { beacon: true })
-}
-
-// Install a scroll-depth tracker for current page. Emits at thresholds only once per route.
-export function installScrollDepthTracker(page?: string){
-  const thresholds = [25, 50, 75, 90]
-  const hit = new Set<number>()
-  const calc = () => {
-    const doc = document.documentElement
-    const body = document.body
-    const scrollTop = window.scrollY || doc.scrollTop || body.scrollTop || 0
-    const viewportH = window.innerHeight || doc.clientHeight
-    const fullH = Math.max(
-      body.scrollHeight, body.offsetHeight,
-      doc.clientHeight, doc.scrollHeight, doc.offsetHeight
-    )
-    const denom = Math.max(1, fullH - viewportH)
-    const pct = Math.min(100, Math.round((scrollTop / denom) * 100))
-    return pct
-  }
-  const onScroll = () => {
-    const pct = calc()
-    for (const t of thresholds){
-      if (pct >= t && !hit.has(t)){
-        hit.add(t)
-        track('scroll_depth', { page, meta: { percent: t } })
-      }
-    }
-  }
-  window.addEventListener('scroll', onScroll, { passive: true })
-  // initial check in case loaded mid-page
-  try{ onScroll() }catch{}
-  return () => window.removeEventListener('scroll', onScroll)
 }

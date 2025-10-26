@@ -56,7 +56,7 @@ export default function HeroCard({ id, image, title, description, sources, onCli
   }, [id])
 
   return (
-    <div ref={rootRef} className="panel hero-card clickable" onClick={()=>{ if(id) track('click_card', { article_id: id, meta: { kind: 'hero' } }); onClick && onClick() }} role="button" tabIndex={0}>
+    <div ref={rootRef} className="panel hero-card clickable" onClick={()=>{ if(id) track('click', { article_id: id, clickId: `hero:${id}`, meta: { kind: 'hero' } }); onClick && onClick() }} role="button" tabIndex={0}>
       <div className="hero-image">
         <img src={img} alt="hero"/>
         {bookmarked && <span className="bookmark-badge" style={{zIndex:3}} aria-label="bookmarked"><svg width="18" height="18" viewBox="0 0 24 24" fill={'#0ea5e9'} stroke={'#0ea5e9'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>}
@@ -82,9 +82,9 @@ export default function HeroCard({ id, image, title, description, sources, onCli
               if(!id) return
               if (token){
                 const res = await serverToggleLike(id, token)
-                if (res){ setLiked(res.like); setDisliked(res.dislike); try{ track('like_toggle', { article_id: id, meta: { like: res.like, kind: 'hero' } }) }catch{} }
+                if (res){ setLiked(res.like); setDisliked(res.dislike); try{ track('toggle', { article_id: id, clickId: `like:${id}`, meta: { like: res.like, kind: 'hero' } }) }catch{} }
               } else {
-                setLiked(v=>{ const nv = !v; try{ track('like_toggle', { article_id: id, meta: { like: nv, kind: 'hero' } }) }catch{}; return nv })
+                setLiked(v=>{ const nv = !v; try{ track('toggle', { article_id: id, clickId: `like:${id}`, meta: { like: nv, kind: 'hero' } }) }catch{}; return nv })
               }
             }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill={liked? '#ef4444':'none'} stroke={liked? '#ef4444':'#6b7687'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -106,9 +106,9 @@ export default function HeroCard({ id, image, title, description, sources, onCli
                     if(!id) return
                     if(token){
                       const ok = await serverSet(id, !bookmarked, token)
-                      if (ok) setBookmarked(!bookmarked)
+                      if (ok) { setBookmarked(!bookmarked); try{ track('toggle', { article_id: id, clickId: `bookmark:${id}`, meta: { bookmarked: !bookmarked, kind: 'hero' } }) }catch{} }
                     } else {
-                      const next = storeToggle({ id, title: t, image: img, description: d }); setBookmarked(next)
+                      const next = storeToggle({ id, title: t, image: img, description: d }); setBookmarked(next); try{ track('toggle', { article_id: id, clickId: `bookmark:${id}`, meta: { bookmarked: next, kind: 'hero' } }) }catch{}
                     }
                     setMenuOpen(false)
                   }}>
@@ -120,9 +120,9 @@ export default function HeroCard({ id, image, title, description, sources, onCli
                     if(!id){ setDisliked(v=>!v); setMenuOpen(false); return }
                     if (token){
                       const res = await serverToggleDislike(id, token)
-                      if (res){ setDisliked(res.dislike); setLiked(res.like); try{ track('dislike_toggle', { article_id: id, meta: { dislike: res.dislike, kind: 'hero' } }) }catch{} }
+                      if (res){ setDisliked(res.dislike); setLiked(res.like); try{ track('toggle', { article_id: id, clickId: `dislike:${id}`, meta: { dislike: res.dislike, kind: 'hero' } }) }catch{} }
                     } else {
-                      setDisliked(v=>{ const nv = !v; try{ track('dislike_toggle', { article_id: id, meta: { dislike: nv, kind: 'hero' } }) }catch{}; return nv })
+                      setDisliked(v=>{ const nv = !v; try{ track('toggle', { article_id: id, clickId: `dislike:${id}`, meta: { dislike: nv, kind: 'hero' } }) }catch{}; return nv })
                     }
                     setMenuOpen(false)
                   }}>

@@ -8,22 +8,20 @@ import Signup from './pages/Signup'
 import Onboarding from './pages/Onboarding'
 import Profile from './pages/Profile'
 import ForYou from './pages/ForYou'
-import { track, trackDwell, installScrollDepthTracker } from './lib/analytics'
+import { track, trackDwell } from './lib/analytics'
 
 function RouteTracker(){
   const loc = useLocation()
   const ref = React.useRef<{ path: string; start: number } | null>(null)
 
   React.useEffect(()=>{
-    // on route change: send dwell for previous, page_view for current
+    // on route change: send dwell for previous, page_in for current
     const now = Date.now()
     const prev = ref.current
     if (prev){ trackDwell(prev.start, prev.path) }
     ref.current = { path: loc.pathname, start: now }
-    track('page_view', { page: loc.pathname })
-    // install scroll depth tracker per route
-    const detach = installScrollDepthTracker(loc.pathname)
-    return () => { try{ detach() }catch{} }
+    track('page_in', { page: loc.pathname })
+    return () => {}
   }, [loc.pathname])
 
   React.useEffect(()=>{

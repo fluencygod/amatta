@@ -16,34 +16,36 @@
 ### 1) Event Metadata
 - `event_id` (string) – 개별 로그 고유 ID. 기본 프런트에서 UUID 생성. 백엔드에서 누락 시 자동 생성.
 - `event_time` (string, ISO8601) – 이벤트 발생 시각(UTC). 프런트 생성, 누락 시 백엔드에서 `ts` 기반 보강.
-- `event_name` (string) – 행동명. 예) `page_view`, `click_card`, `scroll_depth`, `dwell`, `search`, `bookmark_toggle` 등.
+- `event_name` (string) – 행동명. 예) `page_in`, `click`, `dwell`, `search`, `toggle` 등.
 - `client_version` (string) – 프런트 버전. `VITE_CLIENT_VERSION`에서 주입(없으면 기본값).
 
 ### 2) User & Session Context
 - `user_id` (number|null) – 앱 내부 사용자 ID(비식별/최소 권한 준수). 로그인 없으면 null.
 - `session_id` (string) – 세션 ID. 세션 스토리지에 저장되어 페이지 전환 간 유지.
-- `device_type` (string) – `Mobile` | `Tablet` | `PC` (UA/뷰포트 기반 추정).
+- `device_type` (string) – `Mobile` | `Tablet` | `PC` (UA 기반 추정).
 - `duration_sec` (number, optional) – 체류 시간 등 이벤트별 지속시간(예: `dwell`).
 - `page` (string) – 라우팅 경로(`/for-you` 등).
 - `current_url` (string) – 현재 페이지 URL. 프런트가 `url`도 보냄(백엔드가 `current_url`로 보강).
 - `referrer` (string) – 진입 referrer.
-- `viewport` (object) – `{ w:number, h:number }` 뷰포트 크기.
+  
+### 3) 상호작용 식별자
+- `clickId` (string, optional) – 클릭/토글의 맥락+대상 식별자. 예: `card:42`, `hero:42`, `bookmark_item:42`, `like:42`, `dislike:42`, `bookmark:42` 등.
 
-### 3) 도메인/추가 필드
+### 4) 도메인/추가 필드
 - `article_id` (number, optional) – 카드/기사 연관 식별자.
 - `position` (number, optional) – 목록에서의 위치 등.
-- `meta` (object, optional) – 자유형 키-값. 예: `{ percent: 50 }`, `{ query: "ai", len: 2 }`.
+- `meta` (object, optional) – 자유형 키-값. 예: `{ query: "ai", len: 2 }`.
 - `ts` (string, ISO8601) – 프런트 전송 타임스탬프(레거시). 백엔드가 `event_time`으로 정규화.
 - 백엔드가 추가: `ip`(추정 클라이언트 IP), `ua`(User-Agent)
 
-### 4) 예시(JSON)
+### 5) 예시(JSON)
 ```
 {
   "events": [
     {
       "event_id": "2f9e...",
       "event_time": "2025-10-12T07:30:00.000Z",
-      "event_name": "click_card",
+      "event_name": "click",
       "client_version": "0.1.0",
       "device_type": "Mobile",
       "session_id": "sid-abc...",
@@ -51,7 +53,7 @@
       "page": "/",
       "current_url": "https://news.example/",
       "referrer": "",
-      "viewport": { "w": 390, "h": 844 },
+      "clickId": "hero:42",
       "article_id": 42,
       "meta": { "kind": "hero" }
     }
@@ -61,20 +63,19 @@
 
 ## 이벤트 타입(현 구현)
 - 탐색/공통
-  - `page_view` – 라우트 전환 시 기록
-  - `scroll_depth` – 25/50/75/90% 구간별 1회씩
-  - `dwell` – 라우트 체류 시간(ms → `duration_sec` 보강) 종료 시 비콘 전송
+- `page_in` – 라우트 진입 시 기록
+- `dwell` – 라우트 체류 시간(ms → `duration_sec` 보강) 종료 시 비콘 전송
 - 콘텐츠
   - `impression` – 카드/히어로 카드 화면 노출 시
-  - `click_card` – 카드 클릭 시
+  - `click` – 모든 클릭을 단일 이벤트로 수집(clickId로 맥락/대상 구분)
   - `article_open` / `article_close` – 모달 열기/닫기(닫기 시 머문 시간 ms)
 - 계정/프로필
   - `login` / `logout`
   - `profile_view` / `profile_save`
 - 북마크/반응/검색
-  - `bookmark_list_view`, `bookmark_list_item_click`
-  - `bookmark_toggle`
-  - `like_toggle`, `dislike_toggle`
+  - `bookmark_list_view`
+  - `click` – 북마크 목록 아이템 클릭 등(clickId=`bookmark_item:<id>`)
+  - `toggle` – 북마크/좋아요/싫어요 토글(clickId=`bookmark:<id>`/`like:<id>`/`dislike:<id>`)
   - `search` – 쿼리/길이/스코프 등 `meta` 포함
 
 ## 전송/수신 사양
@@ -104,7 +105,7 @@
 
 ## 향후(DB 적재)
 - 컨슈머 서비스 추가하여 `analytics_events` 테이블에 적재
-  - 칼럼 예: event_id(UNIQUE), event_time, event_name, session_id, user_id, client_version, device_type, page, current_url, referrer, article_id, duration_sec, viewport_w, viewport_h, ip, ua, meta_json, raw_json, received_at
+  - 칼럼 예: event_id(UNIQUE), event_time, event_name, session_id, user_id, client_version, device_type, page, current_url, referrer, article_id, duration_sec, click_id, ip, ua, meta_json, raw_json, received_at
   - upsert(충돌 무시)로 idempotent 처리
 
 ## 테스트 방법
@@ -116,4 +117,3 @@ curl -k -X POST 'https://localhost:8000/events' \
 ```
 - 브라우저 DevTools → Network에서 `/events` 200 응답 확인
 - Kafka 확인: `docker exec -it news_kafka kafka-console-consumer --bootstrap-server localhost:9092 --topic news_events --from-beginning`
-
