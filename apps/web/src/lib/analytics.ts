@@ -9,7 +9,7 @@ type EventBase = {
   device_type?: 'Mobile'|'Tablet'|'PC'|string
   duration_sec?: number
   current_url?: string
-  clickId?: string
+  contentId?: string
 
   // existing fields (kept for backend compatibility)
   event: string
@@ -59,7 +59,7 @@ export function basePayload(): Pick<EventBase, 'session_id'|'user_id'|'page'|'ur
 }
 
 export function track(event: string, props: Partial<EventBase> = {}, opts?: { beacon?: boolean }){
-  // detect device type roughly via UA/viewport
+  // detect device type roughly via UA only
   let device: EventBase['device_type'] | undefined
   try{
     const ua = navigator.userAgent || ''

@@ -25,17 +25,19 @@ export default function ArticleModal({ open, onClose, article }: Props){
     if(open){
       document.addEventListener('keydown', onKey)
       document.body.classList.add('modal-open')
-      // article open event + start timer
-      if (article?.id){ track('article_open', { article_id: article.id }) }
+      // Treat modal open as a page_in for the content
+      if (article?.id){
+        try{ track('page_in', { page: `/article/${article.id}?modal=1`, article_id: article.id, contentId: `article:${article.id}` }) }catch{}
+      }
       started.current = Date.now()
     }
     return () => {
       document.removeEventListener('keydown', onKey)
       document.body.classList.remove('modal-open')
-      // article close with dwell
+      // Dwell for content on modal close
       if (article?.id && started.current){
         const dur = Date.now() - started.current
-        track('article_close', { article_id: article.id, meta: { duration_ms: dur } }, { beacon: true })
+        track('dwell', { page: `/article/${article.id}?modal=1`, article_id: article.id, contentId: `article:${article.id}`, meta: { duration_ms: dur }, duration_sec: Math.round(dur/1000) }, { beacon: true })
       }
       started.current = null
     }

@@ -28,8 +28,10 @@
 - `current_url` (string) – 현재 페이지 URL. 프런트가 `url`도 보냄(백엔드가 `current_url`로 보강).
 - `referrer` (string) – 진입 referrer.
   
-### 3) 상호작용 식별자
-- `clickId` (string, optional) – 클릭/토글의 맥락+대상 식별자. 예: `card:42`, `hero:42`, `bookmark_item:42`, `like:42`, `dislike:42`, `bookmark:42` 등.
+### 3) 콘텐츠 식별자/맥락
+- `contentId` (string, optional) – 동일 컨텐츠를 일관되게 식별. 예: `article:42`
+- `meta.source` (string, optional) – 상호작용 맥락. 예: `card`, `hero`, `bookmark_item`
+- `meta.action` (string, optional) – 토글 동작. 예: `like`, `dislike`, `bookmark`; `meta.value`(boolean)로 상태 표시
 
 ### 4) 도메인/추가 필드
 - `article_id` (number, optional) – 카드/기사 연관 식별자.
@@ -53,9 +55,9 @@
       "page": "/",
       "current_url": "https://news.example/",
       "referrer": "",
-      "clickId": "hero:42",
+      "contentId": "article:42",
       "article_id": 42,
-      "meta": { "kind": "hero" }
+      "meta": { "source": "hero" }
     }
   ]
 }
@@ -67,16 +69,20 @@
 - `dwell` – 라우트 체류 시간(ms → `duration_sec` 보강) 종료 시 비콘 전송
 - 콘텐츠
   - `impression` – 카드/히어로 카드 화면 노출 시
-  - `click` – 모든 클릭을 단일 이벤트로 수집(clickId로 맥락/대상 구분)
-  - `article_open` / `article_close` – 모달 열기/닫기(닫기 시 머문 시간 ms)
+  - `click` – 모든 클릭을 단일 이벤트로 수집(`contentId`로 컨텐츠 식별, `meta.source`로 맥락 구분)
 - 계정/프로필
   - `login` / `logout`
   - `profile_view` / `profile_save`
 - 북마크/반응/검색
   - `bookmark_list_view`
-  - `click` – 북마크 목록 아이템 클릭 등(clickId=`bookmark_item:<id>`)
-  - `toggle` – 북마크/좋아요/싫어요 토글(clickId=`bookmark:<id>`/`like:<id>`/`dislike:<id>`)
+  - `click` – 북마크 목록 아이템 클릭 등(`contentId=article:<id>`, `meta.source=bookmark_item`)
+  - `toggle` – 북마크/좋아요/싫어요 토글(`contentId=article:<id>`, `meta.action=bookmark|like|dislike`, `meta.value`)
   - `search` – 쿼리/길이/스코프 등 `meta` 포함
+
+### 모달 취급 원칙
+- 모달(기사 상세)은 별도 이벤트명이 아닌 `page_in`으로 기록합니다.
+- 예) 기사 ID 42 모달 오픈: `page_in` with `page="/article/42?modal=1"`, `contentId="article:42"`
+- 모달 닫힘 시 체류시간은 `dwell`로 전송(`duration_sec` 포함, beacon 사용)
 
 ## 전송/수신 사양
 - 엔드포인트: `POST /events`(기본) 또는 `POST /ingest`(별칭)

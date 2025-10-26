@@ -87,7 +87,7 @@ export default function ForYou(){
         </div>
         <div style={{display:'grid'}}>
           {list.map(b => (
-            <div key={b.id} className={`inbox-item ${active===b.id?'active':''}`} onClick={()=>{ setActive(b.id); try{ track('click', { article_id: b.id, clickId: `bookmark_item:${b.id}` }) }catch{} }} role="button" tabIndex={0}>
+            <div key={b.id} className={`inbox-item ${active===b.id?'active':''}`} onClick={()=>{ setActive(b.id); try{ track('click', { article_id: b.id, contentId: `article:${b.id}`, meta: { source: 'bookmark_item' } }) }catch{} }} role="button" tabIndex={0}>
               {b.image && <img src={b.image} alt="thumb" />}
               <div className="meta">
                 <div className="title">{b.title}</div>

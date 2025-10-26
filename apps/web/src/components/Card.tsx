@@ -98,7 +98,7 @@ export default function Card({ id, image, title, description, sources, trustLeve
   }, [id])
 
   return (
-    <div ref={rootRef} className="panel card clickable" style={{position:'relative'}} onClick={()=>{ if(id) track('click', { article_id: id, clickId: `card:${id}` }); onClick && onClick() }} role="button" tabIndex={0}>
+    <div ref={rootRef} className="panel card clickable" style={{position:'relative'}} onClick={()=>{ if(id) track('click', { article_id: id, contentId: `article:${id}`, meta: { source: 'card' } }); onClick && onClick() }} role="button" tabIndex={0}>
       {image && (
         <>
           <img className="card-cover" src={image} alt={title} />
@@ -126,9 +126,9 @@ export default function Card({ id, image, title, description, sources, trustLeve
               if(!id) return
               if (token){
                 const res = await serverToggleLike(id, token)
-                if (res){ setLiked(res.like); setDisliked(res.dislike); try{ track('toggle', { article_id: id, clickId: `like:${id}`, meta: { like: res.like } }) }catch{} }
+                if (res){ setLiked(res.like); setDisliked(res.dislike); try{ track('toggle', { article_id: id, contentId: `article:${id}`, meta: { action: 'like', value: res.like, source: 'card' } }) }catch{} }
               } else {
-                setLiked(v=>{ const nv = !v; try{ track('toggle', { article_id: id, clickId: `like:${id}`, meta: { like: nv } }) }catch{}; return nv })
+                setLiked(v=>{ const nv = !v; try{ track('toggle', { article_id: id, contentId: `article:${id}`, meta: { action: 'like', value: nv, source: 'card' } }) }catch{}; return nv })
               }
             }}>
               {Icon.heart(liked)}
@@ -144,9 +144,9 @@ export default function Card({ id, image, title, description, sources, trustLeve
                     if(!id) return
                     if(token){
                       const ok = await serverSet(id, !bookmarked, token)
-                      if (ok) { setBookmarked(!bookmarked); try{ track('toggle', { article_id: id, clickId: `bookmark:${id}`, meta: { bookmarked: !bookmarked } }) }catch{} }
+                      if (ok) { setBookmarked(!bookmarked); try{ track('toggle', { article_id: id, contentId: `article:${id}`, meta: { action: 'bookmark', value: !bookmarked, source: 'card' } }) }catch{} }
                     } else {
-                      const next = storeToggle({ id, title, image, description }); setBookmarked(next); try{ track('toggle', { article_id: id, clickId: `bookmark:${id}`, meta: { bookmarked: next } }) }catch{}
+                      const next = storeToggle({ id, title, image, description }); setBookmarked(next); try{ track('toggle', { article_id: id, contentId: `article:${id}`, meta: { action: 'bookmark', value: next, source: 'card' } }) }catch{}
                     }
                     setMenuOpen(false)
                   }}>
@@ -157,9 +157,9 @@ export default function Card({ id, image, title, description, sources, trustLeve
                     if(!id){ setDisliked(v=>!v); setMenuOpen(false); return }
                     if (token){
                       const res = await serverToggleDislike(id, token)
-                      if (res){ setDisliked(res.dislike); setLiked(res.like); try{ track('toggle', { article_id: id, clickId: `dislike:${id}`, meta: { dislike: res.dislike } }) }catch{} }
+                      if (res){ setDisliked(res.dislike); setLiked(res.like); try{ track('toggle', { article_id: id, contentId: `article:${id}`, meta: { action: 'dislike', value: res.dislike, source: 'card' } }) }catch{} }
                     } else {
-                      setDisliked(v=>{ const nv = !v; try{ track('toggle', { article_id: id, clickId: `dislike:${id}`, meta: { dislike: nv } }) }catch{}; return nv })
+                      setDisliked(v=>{ const nv = !v; try{ track('toggle', { article_id: id, contentId: `article:${id}`, meta: { action: 'dislike', value: nv, source: 'card' } }) }catch{}; return nv })
                     }
                     setMenuOpen(false)
                   }}>
