@@ -47,7 +47,13 @@ CREATE TABLE events_raw
 )
 ENGINE = MergeTree
 PARTITION BY toYYYYMM(event_time)
-ORDER BY (event_time, event_name, article_id, session_id)
+-- Sorting key must be non-nullable; map NULLs to sentinel values for ordering
+ORDER BY (
+    event_time,
+    event_name,
+    ifNull(article_id, toUInt64(0)),
+    ifNull(session_id, '')
+)
 SETTINGS index_granularity = 8192;
 
 -- Materialized View to parse JSON and load into raw table

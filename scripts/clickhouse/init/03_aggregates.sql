@@ -13,7 +13,8 @@ CREATE TABLE events_agg_minute
 )
 ENGINE = AggregatingMergeTree
 PARTITION BY toYYYYMM(event_minute)
-ORDER BY (event_minute, event_name, article_id)
+-- Sorting key cannot contain Nullable; map NULL article_id to 0 for ordering
+ORDER BY (event_minute, event_name, ifNull(article_id, toUInt64(0)))
 SETTINGS index_granularity = 8192;
 
 -- MV to populate aggregates from raw
@@ -43,4 +44,3 @@ FROM events_agg_minute
 GROUP BY event_minute, event_name, article_id
 ORDER BY event_minute DESC, event_name, article_id
 SETTINGS max_bytes_before_external_group_by = '2Gi';
-
