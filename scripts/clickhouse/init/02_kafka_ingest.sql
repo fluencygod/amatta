@@ -76,19 +76,19 @@ SELECT
     -- Identities / context (stored as strings to be robust against mixed types)
     JSONExtractString(data, 'user_id') AS user_id,
     JSONExtractString(data, 'session_id') AS session_id,
-    toUInt64OrNull(JSONExtractString(data, 'article_id')) AS article_id,
+    coalesce(toUInt64OrNull(JSONExtractString(data, 'article_id')), JSONExtractUInt(data, 'article_id')) AS article_id,
     JSONExtractString(data, 'page') AS page,
     JSONExtractString(data, 'url') AS url,
     JSONExtractString(data, 'current_url') AS current_url,
     JSONExtractString(data, 'referrer') AS referrer,
-    toInt32OrNull(JSONExtractString(data, 'position')) AS position,
+    coalesce(toInt32OrNull(JSONExtractString(data, 'position')), JSONExtractInt(data, 'position')) AS position,
     JSONExtractRaw(data, 'viewport') AS viewport_json,
     JSONExtractRaw(data, 'meta') AS meta_json,
     JSONExtractString(data, 'ua') AS ua,
     JSONExtractString(data, 'ip') AS ip,
     JSONExtractString(data, 'client_version') AS client_version,
     JSONExtractString(data, 'device_type') AS device_type,
-    toInt32OrNull(JSONExtractString(data, 'duration_sec')) AS duration_sec,
+    coalesce(toInt32OrNull(JSONExtractString(data, 'duration_sec')), JSONExtractInt(data, 'duration_sec')) AS duration_sec,
 
     data
 FROM events_kafka;
