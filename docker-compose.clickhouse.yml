@@ -1,0 +1,25 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: news_clickhouse
+    environment:
+      - CLICKHOUSE_DB=${CLICKHOUSE_DB:-analytics}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-analytics}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-analytics}
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    ports:
+      - "8123:8123"   # HTTP
+      - "9000:9000"   # Native
+    volumes:
+      - ch_data:/var/lib/clickhouse
+      - ./scripts/clickhouse/init:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+networks:
+  default:
+    name: news_net
+    external: true
+
+volumes:
+  ch_data:
+

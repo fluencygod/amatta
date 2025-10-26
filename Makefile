@@ -125,3 +125,14 @@ kafka-topic-create:
 .PHONY: compose-net-init
 compose-net-init:
 	docker network create news_net 2>/dev/null || true
+
+.PHONY: compose-clickhouse-up compose-clickhouse-down compose-clickhouse-logs
+compose-clickhouse-up:
+	docker network create news_net 2>/dev/null || true
+	docker compose -f docker-compose.clickhouse.yml up -d --build
+
+compose-clickhouse-down:
+	docker compose -f docker-compose.clickhouse.yml down -v
+
+compose-clickhouse-logs:
+	docker compose -f docker-compose.clickhouse.yml logs -f clickhouse
