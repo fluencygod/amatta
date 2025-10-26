@@ -10,7 +10,7 @@ CREATE TABLE events_kafka
 ENGINE = Kafka
 SETTINGS
     kafka_broker_list = 'kafka:9092',
-    kafka_topic_list = '${KAFKA_TOPIC:-news_events}',
+    kafka_topic_list = 'news_events',
     kafka_group_name = 'ch_news_ingest',
     kafka_format = 'JSONAsString',
     kafka_num_consumers = 1,
@@ -92,4 +92,3 @@ SELECT
 
     data
 FROM events_kafka;
-
